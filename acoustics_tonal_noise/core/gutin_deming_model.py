@@ -22,19 +22,19 @@ class GutinDemingModel(Model):
         B = acoustics_dict['num_blades']
         rho = acoustics_dict['density']
 
-        x = self.declare_variable('_x_position', shape = shape)
-        y = self.declare_variable('_y_position', shape = shape)
-        z = self.declare_variable('_z_position', shape = shape)
+        x = self.declare_variable('_x_position', shape=shape)
+        y = self.declare_variable('_y_position', shape=shape)
+        z = self.declare_variable('_z_position', shape=shape)
 
-        dT = self.declare_variable('_dT', shape = shape)
-        dQ = self.declare_variable('_dQ', shape = shape)
+        dT = self.declare_variable('_dT', shape=shape)
+        dQ = self.declare_variable('_dQ', shape=shape)
 
         R  = self.declare_variable('_radius', shape =shape)
-        dr = self.declare_variable('_dr', shape = shape)
+        dr = self.declare_variable('_dr', shape=shape)
         
-        Omega = self.declare_variable('_angular_speed', shape = shape)
+        Omega = self.declare_variable('_angular_speed', shape=shape)
 
-        chord = self.declare_variable('_chord', shape = shape)
+        chord = self.declare_variable('_chord', shape=shape)
         t_c   = self.declare_variable('_thickness_to_chord_ratio',shape=shape)
         # self.print_var(t_c)
 
@@ -53,7 +53,7 @@ class GutinDemingModel(Model):
 
         elif dir == 1:
             ds = (x**2 + y**2 + z**2)**0.5
-            theta = self.declare_variable('_theta', shape = shape)
+            theta = self.declare_variable('_theta', shape=shape)
             bessel_input_list = []
             for i in range(max_frequency_mode):
                 frequency_mode = i+1
@@ -63,7 +63,7 @@ class GutinDemingModel(Model):
                 self.register_output(input_string, bessel_input_list[i])
 
         bessel_function = csdl.custom(*bessel_input_list,op = GDBesselCustomExplicitOperation(
-            shape = shape,
+            shape=shape,
             acoustics_dict = acoustics_dict,
         ))
         
@@ -115,11 +115,11 @@ class GutinDemingModel(Model):
                     fr = (dT * csdl.cos(theta) - dQ * a / (Omega * R**2)) * bessel_function[i]
                     gr = chord * t_c * chord * bessel_function[i]
                 elif ((max_frequency_mode == 1) and (shape[0]>1)):
-                    fr = (dT * csdl.cos(theta) - dQ * a / (Omega * R**2)) * bessel_function # fr (num_evaluation, num_radial,num_tangential)
+                    fr = (dT * csdl.cos(theta) - dQ * a / (Omega * R**2)) * bessel_function # fr (num_evaluation, num_radial,num_azimuthal)
                     gr = chord * t_c * chord * bessel_function
 
 
-                fr_sum = csdl.sum(fr * dr, axes = (1,)) # fr_sum (num_evaluations,num_tangential)
+                fr_sum = csdl.sum(fr * dr, axes = (1,)) # fr_sum (num_evaluations,num_azimuthal)
                 gr_sum = csdl.sum(gr * dr, axes = (1,)) 
 
                 PmL = ((i+1) * B * Omega_2_exp / (2 * np.sqrt(2) * np.pi * a * ds_2_exp)) * fr_sum

@@ -8,14 +8,14 @@ class CoreInputsModel(Model):
         # self.parameters.declare('frequency_mode', types = int)
         self.parameters.declare('num_evaluations', types=int)
         self.parameters.declare('num_radial', types=int)
-        self.parameters.declare('num_tangential', types=int)
+        self.parameters.declare('num_azimuthal', types=int)
 
     def define(self):
         # frequency_mode = self.parameters['frequency_mode']
         num_evaluations = self.parameters['num_evaluations']
         num_radial = self.parameters['num_radial']
-        num_tangential = self.parameters['num_tangential']
-        shape = (num_evaluations, num_radial, num_tangential)
+        num_azimuthal = self.parameters['num_azimuthal']
+        shape = (num_evaluations, num_radial, num_azimuthal)
 
         hub_radius = self.declare_variable('hub_radius', shape = (num_evaluations))
         rotor_radius = self.declare_variable('rotor_radius', shape = (num_evaluations))
@@ -55,8 +55,8 @@ class CoreInputsModel(Model):
         
         self.register_output('_M_inf', csdl.expand(M_inf, shape, 'i->ijk'))
 
-        # v = np.linspace(0, np.pi * 2 - np.pi * 2 / num_tangential, num_tangential)
-        v = np.linspace(10 * np.pi/180, 170 * np.pi /180, num_tangential)
+        # v = np.linspace(0, np.pi * 2 - np.pi * 2 / num_azimuthal, num_azimuthal)
+        v = np.linspace(10 * np.pi/180, 170 * np.pi /180, num_azimuthal)
         self.create_input('theta', val = v )
         theta = np.einsum(
             'ij,k->ijk',
@@ -70,7 +70,7 @@ class CoreInputsModel(Model):
 
         normalized_radius = np.einsum(
             'ik,j->ijk',
-            np.ones((num_evaluations, num_tangential)),
+            np.ones((num_evaluations, num_azimuthal)),
             normalized_radial_discretization,
         )
         self.create_input('_normalized_radius', val=normalized_radius)

@@ -16,41 +16,41 @@ class CoreAcousticsModel(Model):
         self.parameters.declare('acoustics_dict', types=AcousticsParameters)
         self.parameters.declare('num_evaluations', types=int)
         self.parameters.declare('num_radial', types=int)
-        self.parameters.declare('num_tangential', types=int)
+        self.parameters.declare('num_azimuthal', types=int)
     
 
     def define(self):
         acoustics_dict = self.parameters['acoustics_dict']
         num_evaluations = self.parameters['num_evaluations']
         num_radial = self.parameters['num_radial']
-        num_tangential = self.parameters['num_tangential']
+        num_azimuthal = self.parameters['num_azimuthal']
 
-        shape = (num_evaluations,num_radial, num_tangential)
+        shape = (num_evaluations,num_radial, num_azimuthal)
 
         self.add(ExternalInputsModel(
-            shape = shape,
+            shape=shape,
             num_evaluations = num_evaluations,
             num_radial = num_radial,
-            num_tangential = num_tangential,
+            num_azimuthal = num_azimuthal,
         ), name = 'external_inputs_model')
 
         self.add(CoreInputsModel(
             num_evaluations = num_evaluations,
             num_radial = num_radial,
-            num_tangential = num_tangential,
+            num_azimuthal = num_azimuthal,
         ), name = 'core_inputs_model')
 
         self.add(PreprocessModel(
-            shape = shape,
+            shape=shape,
         ), name = 'preprocess_model')
 
         self.add(GutinDemingModel(
             acoustics_dict = acoustics_dict,
-            shape = shape,
+            shape=shape,
         ), name = 'gutin_deming_model')
 
         self.add(BarryMagliozziModel(
             acoustics_dict = acoustics_dict,
-            shape = shape,
+            shape=shape,
         ), name = 'barry_magliozzi_model')
     

@@ -16,8 +16,8 @@ class BarryMagliozziModel(Model):
         shape = self.parameters['shape']
         max_frequency_mode = acoustics_dict['mode']
 
-        a = 343#acoustics_dict['speed_of_sound']
-        print(a,'SPEED of SOUND')
+        a = acoustics_dict['speed_of_sound']
+
         dir = acoustics_dict['directivity']
         B = acoustics_dict['num_blades']
         rho = acoustics_dict['density']
@@ -59,6 +59,9 @@ class BarryMagliozziModel(Model):
 
         elif dir == 1:
             ds = (x**2 + y**2 + z**2)**0.5
+            theta = self.declare_variable('_theta', shape=shape)
+            x = ds * csdl.cos(theta)
+            z = ds * csdl.sin(theta)
             Y  = (y**2 + z**2)**0.5
             S0 = (x**2 + (1-M_inf**2)*Y**2)**0.5
             bessel_input_list = []
@@ -123,7 +126,7 @@ class BarryMagliozziModel(Model):
             Omega_2_exp = csdl.expand(Omega_2,(shape[0],shape[2]), 'i->ik')
             M_inf_2 = self.declare_variable('M_inf', shape = (shape[0],))
             M_inf_2_exp = csdl.expand(M_inf_2, (shape[0], shape[2]) ,'i->ik')
-            Y_2 = (z_2**2)**0.5
+            Y_2 = (z_2**2 )**0.5
             S0_2 = (x_2**2 + (1-M_inf_2_exp**2)*Y_2**2)**0.5
             
             SPL_tonal = self.create_output('SPL_tonal_Barry_Magliozzi', shape = (max_frequency_mode, shape[0], shape[2]))
@@ -133,20 +136,27 @@ class BarryMagliozziModel(Model):
                 # bessel_output[i,:,:,:] = csdl.reshape(bessel_function[i],new_shape =(1, shape[0],shape[1],shape[2]))
                 order = (i+1)*B
 
-                # fr = (R / (chord * csdl.cos(twist))) * csdl.sin(order * chord *csdl.cos(twist) / 2 / R) \
-                #     * ((M_inf + x / S0) * Omega * dT / (a * (1-M_inf**2))  - dQ / R**2 ) \
-                #     * (bessel_function[i+1] + (1 - M_inf**2) * Y * R / (2 *S0**2) * (bessel_function[i] - bessel_function[i+2]))
-                fr = (bessel_function[i+1] + (1 - M_inf**2) * Y * R / (2 *S0**2) * (bessel_function[i] - bessel_function[i+2]))
-                self.register_output('fr_test', fr)
+                fr = (R / (chord * csdl.cos(twist))) * csdl.sin(order * chord *csdl.cos(twist) / 2 / R) \
+                    * ((M_inf + x / S0) * Omega * dT / (a * (1-M_inf**2))  - dQ / R**2 ) \
+                    * (bessel_function[i+1] + (1 - M_inf**2) * Y * R / (2 *S0**2) * (bessel_function[i] - bessel_function[i+2]))
+                # fr = (bessel_function[i+1] + (1 - M_inf**2) * Y * R / (2
+                # *S0**2) * (bessel_function[i] - bessel_function[i+2]))
+                # print(bessel_function,'bessel shape')
+                # self.print_var(bessel_function[i+1])
+                # self.print_var(bessel_function[i+2])
+                # fr = (bessel_function[i] - bessel_function[i+2])
+                # self.register_output('fr_test', fr)
                 gr = Ax * (bessel_function[i+1] + (1 - M_inf**2) * Y * R * (bessel_function[i] - bessel_function[i+2])/ (2 *S0**2))
-                self.register_output('gr_test', gr)
+                # self.register_output('gr_test', gr)
 
                 fr_sum = csdl.sum(fr * dr, axes = (1,)) 
                 gr_sum = csdl.sum(gr * dr, axes = (1,)) 
 
                 PmL = (1/(2**0.5 * np.pi*S0_2))*  fr_sum
-                PmT = (-rho * ((i+1) * B * Omega_2_exp)**2 * B**3 / (2 * 2**0.5 * np.pi * (1-M_inf_2_exp**2)**2) * (S0_2 + M_inf_2_exp * x_2)**2 / S0_2**3) * gr_sum
-
+                # self.register_output('PmL',PmL)
+                PmT = (rho * ((i+1) * Omega_2_exp)**2 * B**3 / (2 * 2**0.5 * np.pi * (1-M_inf_2_exp**2)**2) * (S0_2 + M_inf_2_exp * x_2)**2 / S0_2**3) * gr_sum
+                # self.register_output('PmT',PmT)
+                # PmT = -(rho * (i+1)**2 * Omega_2_exp**2 + B**3 * (S0_2 + M_inf_2_exp * x_2)**2 / (2 * 2**0.5 * np.pi * (1 - M_inf_2_exp**2)**2 * S0_2**3)) * gr_sum
                 tonal = 10 * csdl.log10((PmL**2 + PmT**2) / p_ref**2)
                 thickness = 10 * csdl.log10((PmT**2) / p_ref**2)
                 loading = 10 * csdl.log10((PmL**2) / p_ref**2)

@@ -33,10 +33,10 @@ directivity    = 1
 max_freq_mode   = 1
 num_evaluations = 1
 num_radial      = len(dT_dr)
-num_tangential  = 33
+num_azimuthal  = 33
 
-# TO DO: change num_tangential name
-# TO DO: Group vs component 
+# TO DO: change num_azimuthal name
+
 # Acoustics vs AcousticsModel
 #   - AcousticsModel: subclass of csdl model
 #   - Acoustics: subclass of lsdo_kit.solver (conventions for solver, talk to
@@ -51,7 +51,7 @@ num_tangential  = 33
 # lsdo_uvlm
 # lsdo_vpm
 # TO DO:
-shape = (num_evaluations,num_radial, num_tangential)
+shape = (num_evaluations,num_radial, num_azimuthal)
 
 
 acoustics_dict = get_acoustics_parameters(directivity,max_freq_mode,num_blades, altitude)
@@ -63,7 +63,7 @@ group = CoreAcousticsModel(
     acoustics_dict = acoustics_dict, # acoustics = acoustics (instance of subclass of lsdo_kit.solver)
     num_evaluations = num_evaluations, # no empty space left and right of equal sign 
     num_radial = num_radial,
-    num_tangential = num_tangential,
+    num_azimuthal = num_azimuthal,
 )
 acoustics_model.add(group,'core_acoustics_group')
 # pylint 
@@ -94,23 +94,15 @@ for i in range(num_evaluations):
 
 sim.run()
 print('\n')
-# print(sim['rotor_radius'])
-# print(sim['_rotor_radius'])
 
-# print(sim['gr_test'])
-print(sim['fr_test'],'fr_test')
-# exit()
 
 
 GD_tonal_noise = sim['SPL_tonal_Gutin_Deming']
 BM_tonal_noise = sim['SPL_tonal_Barry_Magliozzi']
 theta = sim['_theta'][0,0,:]
 
-
-# print(sim['fr_test'][0,:,0])
-
 GD_gill = np.loadtxt('txt_files/GD_tonal_Gill_output.txt')
 BM_gill = np.loadtxt('txt_files/BM_tonal_Gill_output.txt')
-# polar_plot(theta,GD_tonal_noise,GD_gill,BM_tonal_noise,BM_gill)
+polar_plot(theta,GD_tonal_noise,GD_gill,BM_tonal_noise,BM_gill)
 
 

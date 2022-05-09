@@ -12,7 +12,7 @@ def polar_plot(theta, tonal_noise,verification,BM_tonal_noise,verification_2):
     shape = tonal_noise.shape
     min_dim = min(shape[0],shape[1])
     max_dim = max(shape[0],shape[1])
-    print(shape)
+    # print(shape)
 
     frequency_modes = shape[0]
     num_evaluations = shape[1]

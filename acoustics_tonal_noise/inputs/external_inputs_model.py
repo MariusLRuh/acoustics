@@ -8,13 +8,13 @@ class ExternalInputsModel(Model):
         self.parameters.declare('shape', types=tuple)
         self.parameters.declare('num_evaluations', types=int)
         self.parameters.declare('num_radial', types=int)
-        self.parameters.declare('num_tangential', types=int)
+        self.parameters.declare('num_azimuthal', types=int)
 
     def define(self):
         num_evaluations = self.parameters['num_evaluations']
         num_radial = self.parameters['num_radial']
-        num_tangential = self.parameters['num_tangential']
-        shape = (num_evaluations, num_radial, num_tangential)
+        num_azimuthal = self.parameters['num_azimuthal']
+        shape = (num_evaluations, num_radial, num_azimuthal)
 
         # self.create_input('mode',shape = (frequency_mode,))
 

@@ -14,9 +14,9 @@ class PreprocessModel(Model):
         hub_radius = self.declare_variable('_hub_radius', shape=shape)
         rotor_radius = self.declare_variable('_rotor_radius', shape=shape)
         normalized_radius = self.declare_variable('_normalized_radius', shape=shape)
-        rotational_speed = self.declare_variable('_rotational_speed', shape = shape)
-        t_c = self.declare_variable('_thickness_to_chord_ratio', shape = shape)
-        chord = self.declare_variable('_chord', shape = shape)
+        rotational_speed = self.declare_variable('_rotational_speed', shape=shape)
+        t_c = self.declare_variable('_thickness_to_chord_ratio', shape=shape)
+        chord = self.declare_variable('_chord', shape=shape)
 
         radius = hub_radius + (rotor_radius - hub_radius) * normalized_radius
         self.register_output('_radius', radius)

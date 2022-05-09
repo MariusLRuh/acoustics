@@ -17,23 +17,21 @@ class BMBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
         acoustics_dict = self.parameters['acoustics_dict']
         max_frequency_mode = acoustics_dict['mode']
         
-        self.add_input('BM_bessel_input_mode_0', shape = shape)
-        
+        self.add_input('BM_bessel_input_mode_0', shape=shape)
+        self.add_output('BM_bessel_output_mode_0', shape=shape)
 
         for i in range(max_frequency_mode):
             # Declaring inputs 
             input_string = 'BM_bessel_input_mode_{}'.format(i+1)
-            self.add_input(input_string,shape = shape)
+            self.add_input(input_string,shape=shape)
             # Declaring outputs
             output_string = 'BM_bessel_output_mode_{}'.format(i+1)
-            self.add_output(output_string, shape = shape)
+            self.add_output(output_string, shape=shape)
             # Declaring derivatives
             self.declare_derivatives(output_string,input_string)
 
-        self.add_input('BM_bessel_input_mode_m_plus_one', shape = shape)
-
-        self.add_output('BM_bessel_output_mode_0', shape = shape)
-        self.add_output('BM_bessel_output_mode_m_plus_one', shape = shape)
+        self.add_input('BM_bessel_input_mode_m_plus_one', shape=shape)
+        self.add_output('BM_bessel_output_mode_m_plus_one', shape=shape)
 
     def compute(self, inputs, outputs):
         acoustics_dict = self.parameters['acoustics_dict']  
@@ -43,12 +41,14 @@ class BMBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
         order_0 = 1 * B - 1
         bessel_input_0 = inputs['BM_bessel_input_mode_0']
         outputs['BM_bessel_output_mode_0'] = jv(order_0, bessel_input_0)
+        # print(outputs['BM_bessel_output_mode_0'],'BM_bessel_output_mode_0')
 
         # Computing outputs of Bessel function
         for i in range(max_frequency_mode):
             order = (i+1)*B
             input_string = 'BM_bessel_input_mode_{}'.format(i+1)
             bessel_input  = inputs[input_string]
+            # print(bessel_input,'bessel_input_BM')
             output_string = 'BM_bessel_output_mode_{}'.format(i+1)
             bessel_output = jv(order, bessel_input)
             # print(bessel_output)
@@ -58,6 +58,7 @@ class BMBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
         order_m_plus_one = max_frequency_mode * B + 1
         bessel_input_m_plus_1 = inputs['BM_bessel_input_mode_m_plus_one']
         outputs['BM_bessel_output_mode_m_plus_one'] = jv(order_m_plus_one, bessel_input_m_plus_1)
+        # print(outputs['BM_bessel_output_mode_m_plus_one'],'BM_bessel_output_mode_m_plus_one')
         
 
     # TO DO: "Cross" derivatives 
