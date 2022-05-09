@@ -5,6 +5,8 @@
 This acoustics package requires the following packages to be installed before it can be used:
 
 * [csdl](https://lsdolab.github.io/csdl/docs/tutorial/install) (including csdl_om)
+* [OpenMDAO](https://openmdao.org/newdocs/versions/latest/getting_started/getting_started.html)
+
 
 
 Please follow the installation instructions provided in the above links. Once these packages are installed you can proceed as follows with the installation of lsdo_rotor:
