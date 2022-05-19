@@ -93,6 +93,9 @@ for i in range(num_evaluations):
 
 
 sim.run()
+# acoustics_model.visualize_sparsity(recursive=True)
+
+# exit()
 print('\n')
 
 

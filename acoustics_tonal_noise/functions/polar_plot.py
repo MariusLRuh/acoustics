@@ -18,7 +18,7 @@ def polar_plot(theta, tonal_noise,verification,BM_tonal_noise,verification_2):
     num_evaluations = shape[1]
 
 
-    fig, axs = plt.subplots(frequency_modes,num_evaluations,subplot_kw={'projection': 'polar'},figsize=(10, 10))
+    fig, axs = plt.subplots(frequency_modes,num_evaluations,subplot_kw={'projection': 'polar'},figsize=(7, 7))
     angle = np.deg2rad(0)
 
     if min_dim > 1:        
@@ -32,13 +32,13 @@ def polar_plot(theta, tonal_noise,verification,BM_tonal_noise,verification_2):
                 axs[i,j].legend(loc="lower left",bbox_to_anchor=(.5 + np.cos(angle)/1.5, .5 + np.sin(angle)/1.5))
     
     elif max_dim == 1:
-        axs.plot(theta, tonal_noise[0,0,:],label ='CSDL GD (dB)')
-        axs.plot(theta, BM_tonal_noise[0,0,:], label = 'CSDL BM (dB)')
-        axs.plot(theta, verification,label ='Hyunjune GD (dB)')
-        axs.plot(theta, verification_2,label ='Hyunjune BM (dB)')
+        axs.plot(theta, tonal_noise[0,0,:],marker='o',markersize=5,label ='GD CSDL(dB)')
+        axs.plot(theta, BM_tonal_noise[0,0,:],marker='o',markersize=5, label = 'BM CSDL (dB)')
+        axs.plot(theta, verification,marker='*',markersize=5,label ='GD Matlab (dB)')
+        axs.plot(theta, verification_2,marker='*',markersize=5,label ='BM Matlab (dB)')
         axs.set_theta_zero_location("N")
         axs.set_theta_direction(-1)
-        axs.set_title('Frequency mode: {}'.format(1) + '\n'+ 'Evaluation number: {}'.format(1))
+        # axs.set_title('Frequency mode: {}'.format(1) + '\n'+ 'Evaluation number: {}'.format(1))
         axs.legend(loc="lower left",bbox_to_anchor=(.5 + np.cos(angle)/1.5, .5 + np.sin(angle)/1.5))
 
     elif frequency_modes == 1:
