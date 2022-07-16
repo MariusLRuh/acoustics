@@ -6,7 +6,7 @@ try:
 except:
     raise ModuleNotFoundError("This run file requires a backend for CSDL")
 
-from functions.get_acoustics_dictionary import get_acoustics_parameters
+
 from functions.polar_plot import polar_plot
 from core.core_acoustics_model import CoreAcousticsModel
 
@@ -22,18 +22,26 @@ y_position     = np.array([0,0,0])                                # in (m)
 z_position     = np.array([1.829,1.829,1.829])                    # in (m)
 
 
-t_c_ratio      = np.loadtxt('txt_files/test_t_c.txt')
+t_c_ratio      = np.genfromtxt('txt_files/test_t_c.txt')
+num_radial= len(t_c_ratio)
+directivity = 0
+mode = 1
+num_nodes = 1
+num_azimuthal = 33
+
 dT_dr          = np.loadtxt('txt_files/test_dT_dr.txt')
 dQ_dr          = np.loadtxt('txt_files/test_dQ_dr.txt')
 chord          = np.loadtxt('txt_files/test_chord.txt')
 twist          = 4 * np.ones((len(chord),)) * np.pi / 180
 
 
-directivity    = 1
-max_freq_mode   = 1
-num_evaluations = 1
-num_radial      = len(dT_dr)
-num_azimuthal  = 33
+# TO DO: 
+#   - how to specify/ define directivity/observer location from central run file
+#   - single or multiple observer location 
+#   - where to specify? 
+#   - Reference frame
+
+
 
 # TO DO: change num_azimuthal name
 
@@ -51,61 +59,60 @@ num_azimuthal  = 33
 # lsdo_uvlm
 # lsdo_vpm
 # TO DO:
-shape = (num_evaluations,num_radial, num_azimuthal)
+shape = (num_nodes,num_radial,num_azimuthal)
+
+thrust_origin = np.array([[1.829,0,3.167]])
+
+class RunModel(Model):
+    def define(self):
+         # Inputs not changing across conditions (segments)
+        self.create_input(name='propeller_radius', shape=(1, ), units='m', val=0.6096)
+        self.create_input(name='chord_profile', shape=(num_radial,), units='m', val=chord)
+        self.create_input(name='twist_profile', shape=(num_radial,), units='rad', val=twist)
+        self.create_input(name='thickness_to_chord_ratio', shape=(num_radial,), units='rad', val=t_c_ratio)
+        # pitch_cp = self.create_input(name='pitch_cp', shape=(4,), units='rad', val=np.array([8.60773973e-01,6.18472835e-01,3.76150609e-01,1.88136239e-01]))#np.linspace(35,10,4)*np.pi/180)
+        # self.add_design_variable('pitch_cp', lower=5*np.pi/180,upper=60*np.pi/180)
+        self.create_input(name='thrust_origin', shape=(num_nodes,3), val=np.tile(thrust_origin,(num_nodes,1)))
+
+        self.create_input('omega', shape=(num_nodes, 1), units='rpm', val=2.150)
+        self.create_input('M_inf',shape=(num_nodes), val=0)
+        self.create_input('dT', shape=(num_nodes,num_radial), val=np.tile(dT_dr,(num_nodes,1)))
+        self.create_input('dQ', shape=(num_nodes,num_radial), val=np.tile(dQ_dr,(num_nodes,1)))
 
 
-acoustics_dict = get_acoustics_parameters(directivity,max_freq_mode,num_blades, altitude)
+        self.create_input(name='z', shape=(num_nodes,  1), units='m', val=0)
+        
+        
+        
+        self.add(CoreAcousticsModel(
+            #  acoustics_dict=acoustics_dict, # acoustics = acoustics (instance of subclass of lsdo_kit.solver)
+            name='acoustics',
+            num_blades=num_blades,
+            mode=mode,
+            directivity=directivity,
+            num_nodes=num_nodes, # no empty space left and right of equal sign 
+            num_radial=num_radial,
+            num_azimuthal=num_azimuthal,
+        ), name='noise_model')
 
-
-acoustics_model = Model()
-
-group = CoreAcousticsModel(
-    acoustics_dict = acoustics_dict, # acoustics = acoustics (instance of subclass of lsdo_kit.solver)
-    num_evaluations = num_evaluations, # no empty space left and right of equal sign 
-    num_radial = num_radial,
-    num_azimuthal = num_azimuthal,
-)
-acoustics_model.add(group,'core_acoustics_group')
-# pylint 
-
-sim = Simulator(acoustics_model)
-
-for i in range(num_evaluations):
-    sim['rotational_speed'][i] = RPM[i]/60
-    sim['rotor_radius'][i] = rotor_radius[i]
-    sim['dr'][i] = ((rotor_radius[i])-(hub_radius * 1e-2 * rotor_radius[i]))/ (num_radial -1)
-
-    sim['hub_radius'][i]   = hub_radius * 1e-2 * rotor_radius[i]
-   
-
-    sim['x_position'][i] = x_position[i]
-    sim['y_position'][i] = y_position[i]
-    sim['z_position'][i] = z_position[i]
-    sim['dS'][i] = (x_position[i]**2 + y_position[i]**2 + z_position[i]**2)**0.5
-
-    sim['dT'][i,:] = dT_dr
-    sim['dQ'][i,:] = dQ_dr
-    sim['thickness_to_chord_ratio'][i,:] = t_c_ratio
-    sim['chord'][i,:] = chord
-    sim['twist'][i,:] = twist
-    sim['M_inf'][i] = M_inf[i]
-
-
-
-sim.run()
 # acoustics_model.visualize_sparsity(recursive=True)
-
+sim = Simulator(RunModel())
+sim.run()
 # exit()
 print('\n')
+
+# print(sim['tonal_plus_broadband'])
 
 
 
 GD_tonal_noise = sim['SPL_tonal_Gutin_Deming']
 BM_tonal_noise = sim['SPL_tonal_Barry_Magliozzi']
 theta = sim['_theta'][0,0,:]
+print(GD_tonal_noise)
+print(BM_tonal_noise)
 
-GD_gill = np.loadtxt('txt_files/GD_tonal_Gill_output.txt')
-BM_gill = np.loadtxt('txt_files/BM_tonal_Gill_output.txt')
-polar_plot(theta,GD_tonal_noise,GD_gill,BM_tonal_noise,BM_gill)
+# GD_gill = np.loadtxt('txt_files/GD_tonal_Gill_output.txt')
+# BM_gill = np.loadtxt('txt_files/BM_tonal_Gill_output.txt')
+# polar_plot(theta,GD_tonal_noise,GD_gill,BM_tonal_noise,BM_gill)
 
 

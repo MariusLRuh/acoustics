@@ -1,4 +1,4 @@
-from utils.options_dicitonary import OptionsDictionary
+from acoustics_tonal_noise.utils.options_dicitonary import OptionsDictionary
 
 
 class AcousticsParameters(OptionsDictionary):

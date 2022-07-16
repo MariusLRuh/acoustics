@@ -2,8 +2,8 @@ import numpy as np
 from csdl import Model
 import csdl
 
-from acoustics_parameters import AcousticsParameters
-from core.BM_bessel_custom_explicit_operation import BMBesselCustomExplicitOperation
+from acoustics_tonal_noise.acoustics_parameters import AcousticsParameters
+from acoustics_tonal_noise.core.BM_bessel_custom_explicit_operation import BMBesselCustomExplicitOperation
 
 class BarryMagliozziModel(Model):
 
@@ -16,28 +16,40 @@ class BarryMagliozziModel(Model):
         shape = self.parameters['shape']
         max_frequency_mode = acoustics_dict['mode']
 
-        a = acoustics_dict['speed_of_sound']
+        num_nodes = shape[0]
+        num_radial = shape[1]
+        num_azimuthal = shape[2]
 
         dir = acoustics_dict['directivity']
         B = acoustics_dict['num_blades']
-        rho = acoustics_dict['density']
-
-        x = self.declare_variable('_x_position', shape = shape)
-        y = self.declare_variable('_y_position', shape = shape)
-        z = self.declare_variable('_z_position', shape = shape)
-
-        dT = self.declare_variable('_dT', shape = shape)
-        dQ = self.declare_variable('_dQ', shape = shape)
-
-        M_inf = self.declare_variable('_M_inf',shape = shape)
-
-        R  = self.declare_variable('_radius', shape =shape)
-        dr = self.declare_variable('_dr', shape = shape)
         
-        Omega = self.declare_variable('_angular_speed', shape = shape)
-        chord = self.declare_variable('_chord', shape = shape)
-        twist = self.declare_variable('_twist', shape = shape)
+        rho = self.declare_variable('density', shape=(num_nodes,))
+        rho_exp = csdl.expand(rho,(num_nodes,num_azimuthal), 'i->ik')
+        a = self.declare_variable('speed_of_sound', shape=(num_nodes,))
+        a_exp = csdl.expand(a, shape,'i->ijk')
+        
+        x = self.declare_variable('_x_position', shape=shape)
+        # self.print_var(x)
+        y = self.declare_variable('_y_position', shape=shape)
+        # self.print_var(y)
+        z = self.declare_variable('_z_position', shape=shape)
+        # self.print_var(z)
+
+        dT = self.declare_variable('_dT', shape=shape)
+        self.print_var(dT)
+        dQ = self.declare_variable('_dQ', shape=shape)
+        self.print_var(dQ)
+        M_inf = self.declare_variable('_M_inf',shape=shape)
+        # self.print_var(M_inf)
+        R  = self.declare_variable('_radius', shape =shape)
+        dr = self.declare_variable('_dr', shape=shape)
+        
+        Omega = self.declare_variable('_angular_speed', shape=shape)
+        # self.print_var(Omega)
+        chord = self.declare_variable('_chord', shape=shape)
+        twist = self.declare_variable('_twist', shape=shape)
         t_c   = self.declare_variable('_thickness_to_chord_ratio',shape=shape)
+        # self.print_var(t_c)
 
         h = chord * t_c 
         Ax = 0.6853 * chord * h
@@ -45,16 +57,23 @@ class BarryMagliozziModel(Model):
 
 
         if dir == 0:
-            ds = (x**2 + y**2 + z**2)**0.5
+            ds = (x**2 + y**2 + z**2)**0.5 # y and z are in rotor-plane and x is rotor-axis 
             Y  = (y**2 + z**2)**0.5
             S0 = (x**2 + (1-M_inf**2)*Y**2)**0.5
+            theta = csdl.arctan((z**2 + y**2)**0.5 / x)
             bessel_input_list = []
+            input_0 = (B * 1 - 1) * Omega * Y * R / (a_exp * S0)
+            self.register_output('BM_bessel_input_mode_0', input_0)
+            bessel_input_list.append(input_0)
             for i in range(max_frequency_mode):
                 frequency_mode = i+1
-                bessel_input = B * frequency_mode * Omega * Y * R / (a * S0)
+                bessel_input = B * frequency_mode * Omega * Y * R / (a_exp * S0)
                 bessel_input_list.append(bessel_input)
                 input_string = 'BM_bessel_input_mode_{}'.format(i+1)
-                self.register_output(input_string, bessel_input_list[i])
+                self.register_output(input_string, bessel_input_list[i+1])
+            input_m_plus_one = (B * max_frequency_mode + 1) * Omega * Y * R / (a_exp * S0)
+            self.register_output('BM_bessel_input_mode_m_plus_one', input_m_plus_one)
+            bessel_input_list.append(input_m_plus_one)
 
 
         elif dir == 1:
@@ -65,85 +84,93 @@ class BarryMagliozziModel(Model):
             Y  = (y**2 + z**2)**0.5
             S0 = (x**2 + (1-M_inf**2)*Y**2)**0.5
             bessel_input_list = []
-            input_0 = (B * 1 - 1) * Omega * Y * R / (a * S0)
+            input_0 = (B * 1 - 1) * Omega * Y * R / (a_exp * S0)
             self.register_output('BM_bessel_input_mode_0', input_0)
             bessel_input_list.append(input_0)
             for i in range(max_frequency_mode):
                 frequency_mode = i+1
-                bessel_input = B * frequency_mode * Omega * Y * R / (a * S0)
+                bessel_input = B * frequency_mode * Omega * Y * R / (a_exp * S0)
                 bessel_input_list.append(bessel_input)
                 input_string = 'BM_bessel_input_mode_{}'.format(i+1)
                 self.register_output(input_string, bessel_input_list[i+1])
         
-            input_m_plus_one = (B * max_frequency_mode + 1) * Omega * Y * R / (a * S0)
+            input_m_plus_one = (B * max_frequency_mode + 1) * Omega * Y * R / (a_exp * S0)
             self.register_output('BM_bessel_input_mode_m_plus_one', input_m_plus_one)
             bessel_input_list.append(input_m_plus_one)
         
         
         bessel_function = csdl.custom(*bessel_input_list,op = BMBesselCustomExplicitOperation(
-            shape = shape,
+            shape=shape,
             acoustics_dict = acoustics_dict,
         ))
-        
-        # bessel_output = self.create_output('bessel_output_all_modes', shape = (max_frequency_mode, shape[0],shape[1],shape[2]))
+        # self.print_var(bessel_function[2])
+        # bessel_output = self.create_output('bessel_output_all_modes', shape = (max_frequency_mode, num_nodes,shape[1],num_azimuthal))
         
         
 
         p_ref = 2*10**-5
         if dir == 0:
-            Omega_2 = self.declare_variable('rotational_speed', shape = (shape[0],)) * 2 * np.pi
-            ds_2 = self.declare_variable('dS', shape = (shape[0],))
+            Omega_2 = self.declare_variable('rotational_speed', shape = (num_nodes,)) * 2 * np.pi
+            ds_2 = self.declare_variable('dS', shape = (num_nodes,))
  
-            SPL_tonal = self.create_output('SPL_tonal_Barry_Magliozzi', shape = (max_frequency_mode, shape[0]))
-            SPL_T = self.create_output('SPL_thickness_Barry_Magliozzi', shape = (max_frequency_mode, shape[0]))
-            SPL_L = self.create_output('SPL_loading_Barry_Magliozzi', shape = (max_frequency_mode, shape[0]))
+            SPL_tonal = self.create_output('SPL_tonal_Barry_Magliozzi', shape = (max_frequency_mode, num_nodes))
+            SPL_T = self.create_output('SPL_thickness_Barry_Magliozzi', shape = (max_frequency_mode, num_nodes))
+            SPL_L = self.create_output('SPL_loading_Barry_Magliozzi', shape = (max_frequency_mode, num_nodes))
             for i in range(max_frequency_mode):
-                bessel_output[i,:,:,:] = csdl.reshape(bessel_function[i],new_shape =(1, shape[0],shape[1],shape[2]))
-                
-                fr = dT * csdl.cos(theta) - dQ * a / (Omega * R**2) * bessel_function[i]
+                # bessel_output[i,:,:,:] = csdl.reshape(bessel_function[i],new_shape =(1, num_nodes,shape[1],num_azimuthal))
+                print(bessel_function)
+                fr = dT * csdl.cos(theta) - dQ * a_exp / (Omega * R**2) * bessel_function[i]
                 gr = chord * t_c * bessel_function[i]
                 
-                fr_sum = csdl.sum(fr * dr, axes = (1,2)) / shape[2]
-                gr_sum = csdl.sum(gr * dr, axes = (1,2)) /shape[2]
+                fr_sum = csdl.sum(fr * dr, axes = (1,2)) / num_azimuthal
+                gr_sum = csdl.sum(gr * dr, axes = (1,2)) /num_azimuthal
                 PmL = (i+1) * B * Omega_2 / (2 * np.sqrt(2) * np.pi * a * ds_2) * fr_sum
                 PmT = (-rho * ((i+1) * B * Omega_2)**2 * B / (3 * 2**0.5) * np.pi * ds_2) * gr_sum
                 
-                SPL_tonal[i,:] = csdl.reshape(10 * csdl.log10((PmL**2 + PmT**2) / p_ref**2) ,new_shape = (1,shape[0]))
-                SPL_T[i,:] = csdl.reshape(10 * csdl.log10((PmT**2) / p_ref**2) ,new_shape = (1,shape[0]))
-                SPL_L[i,:] = csdl.reshape(10 * csdl.log10((PmL**2) / p_ref**2), new_shape = (1,shape[0]))
-                
+                SPL_tonal[i,:] = csdl.reshape(10 * csdl.log10((PmL**2 + PmT**2) / p_ref**2) ,new_shape = (1,num_nodes))
+                SPL_T[i,:] = csdl.reshape(10 * csdl.log10((PmT**2) / p_ref**2) ,new_shape = (1,num_nodes))
+                SPL_L[i,:] = csdl.reshape(10 * csdl.log10((PmL**2) / p_ref**2), new_shape = (1,num_nodes))
+            
+              
         elif dir == 1:
-            theta = self.declare_variable('_theta', shape = shape)
-            theta_2 = self.declare_variable('theta', shape = (shape[2],))
-            theta_2_exp = csdl.expand(theta_2, (shape[0], shape[2]),'k->ik')
-            ds_2 = self.declare_variable('dS', shape = (shape[0],))
-            ds_2_exp = csdl.expand(ds_2, (shape[0],shape[2]),'i->ik')
+            theta = self.declare_variable('_theta', shape=shape)
+            # self.print_var(theta)
+            theta_2 = self.declare_variable('theta', shape = (num_azimuthal,))
+            # self.print_var(theta_2)
+            theta_2_exp = csdl.expand(theta_2, (num_nodes, num_azimuthal),'k->ik')
+            ds_2 = self.declare_variable('dS', shape = (num_nodes,))
+            
+            ds_2_exp = csdl.expand(ds_2, (num_nodes,num_azimuthal),'i->ik')
+            # self.print_var(ds_2_exp)
             x = ds * csdl.cos(theta)
             x_2 = ds_2_exp * csdl.cos(theta_2_exp)
             z = ds * csdl.sin(theta)
             z_2 = ds_2_exp * csdl.sin(theta_2_exp)
-            Omega_2 = self.declare_variable('rotational_speed', shape = (shape[0],)) * 2 * np.pi
-            Omega_2_exp = csdl.expand(Omega_2,(shape[0],shape[2]), 'i->ik')
-            M_inf_2 = self.declare_variable('M_inf', shape = (shape[0],))
-            M_inf_2_exp = csdl.expand(M_inf_2, (shape[0], shape[2]) ,'i->ik')
+            Omega_2 = self.declare_variable('rotational_speed', shape = (num_nodes,)) * 2 * np.pi
+            # self.print_var(Omega_2)
+            Omega_2_exp = csdl.expand(Omega_2,(num_nodes,num_azimuthal), 'i->ik')
+            # self.print_var(Omega_2_exp)
+            M_inf_2 = self.declare_variable('M_inf', shape = (num_nodes,))
+            M_inf_2_exp = csdl.expand(M_inf_2, (num_nodes, num_azimuthal) ,'i->ik')
             Y_2 = (z_2**2 )**0.5
             S0_2 = (x_2**2 + (1-M_inf_2_exp**2)*Y_2**2)**0.5
             
-            SPL_tonal = self.create_output('SPL_tonal_Barry_Magliozzi', shape = (max_frequency_mode, shape[0], shape[2]))
-            SPL_T = self.create_output('SPL_thickness_Barry_Magliozzi', shape = (max_frequency_mode, shape[0], shape[2]))
-            SPL_L = self.create_output('SPL_loading_Barry_Magliozzi', shape = (max_frequency_mode, shape[0], shape[2]))
+            SPL_tonal = self.create_output('SPL_tonal_Barry_Magliozzi', shape = (max_frequency_mode, num_nodes, num_azimuthal))
+            SPL_T = self.create_output('SPL_thickness_Barry_Magliozzi', shape = (max_frequency_mode, num_nodes, num_azimuthal))
+            SPL_L = self.create_output('SPL_loading_Barry_Magliozzi', shape = (max_frequency_mode, num_nodes, num_azimuthal))
             for i in range(max_frequency_mode):
-                # bessel_output[i,:,:,:] = csdl.reshape(bessel_function[i],new_shape =(1, shape[0],shape[1],shape[2]))
+                # bessel_output[i,:,:,:] = csdl.reshape(bessel_function[i],new_shape =(1, num_nodes,shape[1],num_azimuthal))
                 order = (i+1)*B
-
+                # self.print_var(chord)
                 fr = (R / (chord * csdl.cos(twist))) * csdl.sin(order * chord *csdl.cos(twist) / 2 / R) \
-                    * ((M_inf + x / S0) * Omega * dT / (a * (1-M_inf**2))  - dQ / R**2 ) \
+                    * ((M_inf + x / S0) * Omega * dT / (a_exp * (1-M_inf**2))  - dQ / R**2 ) \
                     * (bessel_function[i+1] + (1 - M_inf**2) * Y * R / (2 *S0**2) * (bessel_function[i] - bessel_function[i+2]))
+                # self.print_var(fr)
                 # fr = (bessel_function[i+1] + (1 - M_inf**2) * Y * R / (2
                 # *S0**2) * (bessel_function[i] - bessel_function[i+2]))
                 # print(bessel_function,'bessel shape')
-                # self.print_var(bessel_function[i+1])
-                # self.print_var(bessel_function[i+2])
+                # # self.print_var(bessel_function[i+1])
+                # # self.print_var(bessel_function[i+2])
                 # fr = (bessel_function[i] - bessel_function[i+2])
                 # self.register_output('fr_test', fr)
                 gr = Ax * (bessel_function[i+1] + (1 - M_inf**2) * Y * R * (bessel_function[i] - bessel_function[i+2])/ (2 *S0**2))
@@ -154,7 +181,7 @@ class BarryMagliozziModel(Model):
 
                 PmL = (1/(2**0.5 * np.pi*S0_2))*  fr_sum
                 # self.register_output('PmL',PmL)
-                PmT = (rho * ((i+1) * Omega_2_exp)**2 * B**3 / (2 * 2**0.5 * np.pi * (1-M_inf_2_exp**2)**2) * (S0_2 + M_inf_2_exp * x_2)**2 / S0_2**3) * gr_sum
+                PmT = (rho_exp * ((i+1) * Omega_2_exp)**2 * B**3 / (2 * 2**0.5 * np.pi * (1-M_inf_2_exp**2)**2) * (S0_2 + M_inf_2_exp * x_2)**2 / S0_2**3) * gr_sum
                 # self.register_output('PmT',PmT)
                 # PmT = -(rho * (i+1)**2 * Omega_2_exp**2 + B**3 * (S0_2 + M_inf_2_exp * x_2)**2 / (2 * 2**0.5 * np.pi * (1 - M_inf_2_exp**2)**2 * S0_2**3)) * gr_sum
                 tonal = 10 * csdl.log10((PmL**2 + PmT**2) / p_ref**2)
@@ -162,9 +189,9 @@ class BarryMagliozziModel(Model):
                 loading = 10 * csdl.log10((PmL**2) / p_ref**2)
 
 
-                SPL_tonal[i,:,:] = csdl.reshape(tonal ,new_shape = (1, shape[0], shape[2]))
-                SPL_T[i,:,:] = csdl.reshape(thickness,new_shape = (1,shape[0], shape[2]))
-                SPL_L[i,:,:] = csdl.reshape(loading, new_shape = (1,shape[0], shape[2]))
+                SPL_tonal[i,:,:] = csdl.reshape(tonal ,new_shape = (1, num_nodes, num_azimuthal))
+                SPL_T[i,:,:] = csdl.reshape(thickness,new_shape = (1,num_nodes, num_azimuthal))
+                SPL_L[i,:,:] = csdl.reshape(loading, new_shape = (1,num_nodes, num_azimuthal))
 
 
         

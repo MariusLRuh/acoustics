@@ -15,15 +15,15 @@ def polar_plot(theta, tonal_noise,verification,BM_tonal_noise,verification_2):
     # print(shape)
 
     frequency_modes = shape[0]
-    num_evaluations = shape[1]
+    num_nodes = shape[1]
 
 
-    fig, axs = plt.subplots(frequency_modes,num_evaluations,subplot_kw={'projection': 'polar'},figsize=(7, 7))
+    fig, axs = plt.subplots(frequency_modes,num_nodes,subplot_kw={'projection': 'polar'},figsize=(7, 7))
     angle = np.deg2rad(0)
 
     if min_dim > 1:        
         for i in range(frequency_modes):
-            for j in range(num_evaluations):
+            for j in range(num_nodes):
                 axs[i,j].plot(theta, tonal_noise[i,j,:],label = 'SPL (dB)')
                 # axs[i,j].plot(theta, verification,label ='Hyunjune GD (dB)')
                 axs[i,j].set_theta_zero_location("N")
@@ -43,16 +43,16 @@ def polar_plot(theta, tonal_noise,verification,BM_tonal_noise,verification_2):
 
     elif frequency_modes == 1:
         for i in range(frequency_modes):
-            for j in range(num_evaluations):
+            for j in range(num_nodes):
                 axs[j].plot(theta, tonal_noise[i,j,:],label ='SPL (dB)')
                 axs[j].set_theta_zero_location("N")
                 axs[j].set_theta_direction(-1)
                 axs[j].set_title('Frequency mode: {}'.format(i+1) + '\n'+ 'Evaluation number: {}'.format(j+1))
                 axs[j].legend(loc="lower left",bbox_to_anchor=(.5 + np.cos(angle)/1.5, .5 + np.sin(angle)/1.5))
                 
-    elif num_evaluations == 1:
+    elif num_nodes == 1:
         for i in range(frequency_modes):
-            for j in range(num_evaluations):
+            for j in range(num_nodes):
                 axs[i].plot(theta, tonal_noise[i,j,:], label ='SPL (dB)')
                 axs[i].set_theta_zero_location("N")
                 axs[i].set_theta_direction(-1)

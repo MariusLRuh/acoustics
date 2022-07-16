@@ -5,7 +5,7 @@ import openmdao.api as om
 import scipy
 from scipy.special import jv,jvp 
 
-from acoustics_parameters import AcousticsParameters
+from acoustics_tonal_noise.acoustics_parameters import AcousticsParameters
 
 class GDBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
     def initialize(self):

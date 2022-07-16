@@ -2,8 +2,8 @@ import numpy as np
 from csdl import Model
 import csdl
 
-from acoustics_parameters import AcousticsParameters
-from core.GD_bessel_custom_explicit_operation import GDBesselCustomExplicitOperation
+from acoustics_tonal_noise.acoustics_parameters import AcousticsParameters
+from acoustics_tonal_noise.core.GD_bessel_custom_explicit_operation import GDBesselCustomExplicitOperation
 
 class GutinDemingModel(Model):
 
@@ -16,11 +16,18 @@ class GutinDemingModel(Model):
         shape = self.parameters['shape']
         max_frequency_mode = acoustics_dict['mode']
 
-        a = acoustics_dict['speed_of_sound']
-        # print(a,'SPEED of SOUND')
+        num_nodes = shape[0]
+        num_radial = shape[1]
+        num_azimuthal = shape[2]
+
         dir = acoustics_dict['directivity']
         B = acoustics_dict['num_blades']
-        rho = acoustics_dict['density']
+
+        rho = self.declare_variable('density', shape=(num_nodes,))
+        rho_exp = csdl.expand(rho,(num_nodes,num_azimuthal), 'i->ik')
+        a = self.declare_variable('speed_of_sound', shape=(num_nodes,))
+        a_exp = csdl.expand(a, shape,'i->ijk')
+        a_exp_2 = csdl.expand(a, (num_nodes, num_azimuthal),'i->ik')
 
         x = self.declare_variable('_x_position', shape=shape)
         y = self.declare_variable('_y_position', shape=shape)
@@ -36,7 +43,7 @@ class GutinDemingModel(Model):
 
         chord = self.declare_variable('_chord', shape=shape)
         t_c   = self.declare_variable('_thickness_to_chord_ratio',shape=shape)
-        # self.print_var(t_c)
+        # # self.print_var(t_c)
 
 
         if dir == 0:
@@ -45,7 +52,7 @@ class GutinDemingModel(Model):
             bessel_input_list = []
             for i in range(max_frequency_mode):
                 frequency_mode = i+1
-                bessel_input = B * frequency_mode * Omega * R * csdl.sin(theta) / a
+                bessel_input = B * frequency_mode * Omega * R * csdl.sin(theta) / a_exp
                 bessel_input_list.append(bessel_input)
                 input_string = 'GD_bessel_input_mode_{}'.format(i+1)
                 self.register_output(input_string, bessel_input_list[i])
@@ -57,7 +64,7 @@ class GutinDemingModel(Model):
             bessel_input_list = []
             for i in range(max_frequency_mode):
                 frequency_mode = i+1
-                bessel_input = B * frequency_mode * Omega * R * csdl.sin(theta) / a
+                bessel_input = B * frequency_mode * Omega * R * csdl.sin(theta) / a_exp
                 bessel_input_list.append(bessel_input)
                 input_string = 'GD_bessel_input_mode_{}'.format(i+1)
                 self.register_output(input_string, bessel_input_list[i])
@@ -81,10 +88,19 @@ class GutinDemingModel(Model):
             SPL_L = self.create_output('SPL_loading_Gutin_Deming', shape = (max_frequency_mode, shape[0]))
             
             for i in range(max_frequency_mode):
-                bessel_output[i,:,:,:] = csdl.reshape(bessel_function[i],new_shape =(1, shape[0],shape[1],shape[2]))
-                
-                fr = dT * csdl.cos(theta) - dQ * a / (Omega * R**2) * bessel_function[i]
-                gr = chord * t_c * bessel_function[i]
+                # bessel_output[i,:,:,:] = csdl.reshape(bessel_function[i],new_shape =(1, shape[0],shape[1],shape[2]))
+                print(bessel_function)
+                # fr = dT * csdl.cos(theta) - dQ * a / (Omega * R**2) * bessel_function[i]
+                # gr = chord * t_c * bessel_function[i]
+                if ((max_frequency_mode == 1) and (shape[0] == 1)):
+                    fr = (dT * csdl.cos(theta) - dQ * a_exp / (Omega * R**2)) * bessel_function[i,:,:]
+                    gr = chord * t_c * chord * bessel_function[i,:,:]
+                elif (max_frequency_mode > 1):
+                    fr = (dT * csdl.cos(theta) - dQ * a_exp / (Omega * R**2)) * bessel_function[i]
+                    gr = chord * t_c * chord * bessel_function[i]
+                elif ((max_frequency_mode == 1) and (shape[0]>1)):
+                    fr = (dT * csdl.cos(theta) - dQ * a_exp / (Omega * R**2)) * bessel_function # fr (num_evaluation, num_radial,num_azimuthal)
+                    gr = chord * t_c * chord * bessel_function
                 
                 fr_sum = csdl.sum(fr * dr, axes = (1,2)) / shape[2]
                 gr_sum = csdl.sum(gr * dr, axes = (1,2)) /shape[2]
@@ -109,21 +125,21 @@ class GutinDemingModel(Model):
                 
                 # print(bessel_function.shape,'bessl_shape')
                 if ((max_frequency_mode == 1) and (shape[0] == 1)):
-                    fr = (dT * csdl.cos(theta) - dQ * a / (Omega * R**2)) * bessel_function[i,:,:]
+                    fr = (dT * csdl.cos(theta) - dQ * a_exp / (Omega * R**2)) * bessel_function[i,:,:]
                     gr = chord * t_c * chord * bessel_function[i,:,:]
                 elif (max_frequency_mode > 1):
-                    fr = (dT * csdl.cos(theta) - dQ * a / (Omega * R**2)) * bessel_function[i]
+                    fr = (dT * csdl.cos(theta) - dQ * a_exp / (Omega * R**2)) * bessel_function[i]
                     gr = chord * t_c * chord * bessel_function[i]
                 elif ((max_frequency_mode == 1) and (shape[0]>1)):
-                    fr = (dT * csdl.cos(theta) - dQ * a / (Omega * R**2)) * bessel_function # fr (num_evaluation, num_radial,num_azimuthal)
+                    fr = (dT * csdl.cos(theta) - dQ * a_exp / (Omega * R**2)) * bessel_function # fr (num_evaluation, num_radial,num_azimuthal)
                     gr = chord * t_c * chord * bessel_function
 
 
-                fr_sum = csdl.sum(fr * dr, axes = (1,)) # fr_sum (num_evaluations,num_azimuthal)
+                fr_sum = csdl.sum(fr * dr, axes = (1,)) # fr_sum (num_nodes,num_azimuthal)
                 gr_sum = csdl.sum(gr * dr, axes = (1,)) 
 
-                PmL = ((i+1) * B * Omega_2_exp / (2 * np.sqrt(2) * np.pi * a * ds_2_exp)) * fr_sum
-                PmT = (-rho * ((i+1) * B * Omega_2_exp)**2 * B / ((3 * 2**0.5) * np.pi * ds_2_exp)) * gr_sum
+                PmL = ((i+1) * B * Omega_2_exp / (2 * np.sqrt(2) * np.pi * a_exp_2 * ds_2_exp)) * fr_sum
+                PmT = (-rho_exp * ((i+1) * B * Omega_2_exp)**2 * B / ((3 * 2**0.5) * np.pi * ds_2_exp)) * gr_sum
 
                 tonal = 10 * csdl.log10((PmL**2 + PmT**2) / p_ref**2)
                 thickness = 10 * csdl.log10((PmT**2) / p_ref**2)
