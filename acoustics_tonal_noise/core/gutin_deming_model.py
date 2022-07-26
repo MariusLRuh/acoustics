@@ -110,6 +110,8 @@ class GutinDemingModel(Model):
                 SPL_tonal[i,:] = csdl.reshape(10 * csdl.log10((PmL**2 + PmT**2) / p_ref**2) ,new_shape = (1,shape[0]))
                 SPL_T[i,:] = csdl.reshape(10 * csdl.log10((PmT**2) / p_ref**2) ,new_shape = (1,shape[0]))
                 SPL_L[i,:] = csdl.reshape(10 * csdl.log10((PmL**2) / p_ref**2), new_shape = (1,shape[0]))
+        
+            self.add_objective('SPL_tonal_Gutin_Deming')
                 
         elif dir == 1:
             Omega_2 = self.declare_variable('rotational_speed', shape = (shape[0],)) * 2 * np.pi
@@ -149,6 +151,8 @@ class GutinDemingModel(Model):
                 SPL_tonal[i,:,:] = csdl.reshape(tonal ,new_shape = (1, shape[0], shape[2]))
                 SPL_T[i,:,:] = csdl.reshape(thickness,new_shape = (1,shape[0], shape[2]))
                 SPL_L[i,:,:] = csdl.reshape(loading, new_shape = (1,shape[0], shape[2]))
+
+            
 
 
         

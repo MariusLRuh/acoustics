@@ -6,17 +6,17 @@ import csdl
 class CoreInputsModel(Model):
     def initialize(self):
         # self.parameters.declare('frequency_mode', types = int)
-        self.parameters.declare('num_nodes', types=int)
-        self.parameters.declare('num_radial', types=int)
-        self.parameters.declare('num_azimuthal', types=int)
+        self.parameters.declare('shape', types=tuple)
 
     def define(self):
         # frequency_mode = self.parameters['frequency_mode']
-        num_nodes = self.parameters['num_nodes']
-        num_radial = self.parameters['num_radial']
-        num_azimuthal = self.parameters['num_azimuthal']
-        shape = (num_nodes, num_radial, num_azimuthal)
 
+        shape = self.parameters['shape']
+
+        num_nodes = shape[0]
+        num_radial = shape[1]
+        num_azimuthal = shape[2]
+        
         hub_radius = self.declare_variable('hub_radius', shape=(1,))
         rotor_radius = self.declare_variable('propeller_radius', shape=(1,))
         dr = self.declare_variable('dr', shape=(1,))
@@ -33,7 +33,7 @@ class CoreInputsModel(Model):
         dT = self.declare_variable('dT', shape=(num_nodes,num_radial,num_azimuthal))
         dQ = self.declare_variable('dQ', shape=(num_nodes,num_radial, num_azimuthal))
         # self.print_var(dQ)
-        M_inf = self.declare_variable('M_inf', shape=(num_nodes,),val=0)
+        M_inf = self.declare_variable('M_inf', shape=(1,),val=0)
 
 
         # expanding variables to shape

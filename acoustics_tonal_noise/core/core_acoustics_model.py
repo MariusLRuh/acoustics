@@ -1,3 +1,4 @@
+from email.policy import default
 import numpy as np
 from csdl import Model
 
@@ -24,6 +25,7 @@ class CoreAcousticsModel(Model):
         self.parameters.declare('num_blades', types=int, default=2)
         self.parameters.declare('directivity', types=int, default=0)
         self.parameters.declare('mode', types=int, default=1)
+        self.parameters.declare('mission_segment', types=str, default='hover')
         
         
     
@@ -36,6 +38,7 @@ class CoreAcousticsModel(Model):
         num_blades = self.parameters['num_blades']
         directivity = self.parameters['directivity']
         mode = self.parameters['mode']
+        mission_segment = self.parameters['mission_segment']
 
         shape = (num_nodes,num_radial, num_azimuthal)
 
@@ -43,15 +46,13 @@ class CoreAcousticsModel(Model):
 
         self.add(ExternalInputsModel(
             shape=shape,
-            num_nodes = num_nodes,
-            num_radial = num_radial,
-            num_azimuthal = num_azimuthal,
+            T_o_name_list=['stuff'],
+            mission_segment=mission_segment,
+
         ), name = 'external_inputs_model')
 
         self.add(CoreInputsModel(
-            num_nodes = num_nodes,
-            num_radial = num_radial,
-            num_azimuthal = num_azimuthal,
+            shape=shape,
         ), name = 'core_inputs_model')
 
         self.add(PreprocessModel(
@@ -62,10 +63,10 @@ class CoreAcousticsModel(Model):
             shape=(num_nodes,1),
         ),name='atmosphere_model')
 
-        self.add(GutinDemingModel(
-            acoustics_dict = acoustics_dict,
-            shape=shape,
-        ), name = 'gutin_deming_model')
+        # self.add(GutinDemingModel(
+        #     acoustics_dict = acoustics_dict,
+        #     shape=shape,
+        # ), name = 'gutin_deming_model')
 
         self.add(BarryMagliozziModel(
             acoustics_dict = acoustics_dict,

@@ -17,6 +17,8 @@ class BMBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
         acoustics_dict = self.parameters['acoustics_dict']
         max_frequency_mode = acoustics_dict['mode']
         
+        indices = np.arange(shape[0] * shape[1] * shape[2])
+
         self.add_input('BM_bessel_input_mode_0', shape=shape)
         self.add_output('BM_bessel_output_mode_0', shape=shape)
 
@@ -28,7 +30,7 @@ class BMBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
             output_string = 'BM_bessel_output_mode_{}'.format(i+1)
             self.add_output(output_string, shape=shape)
             # Declaring derivatives
-            self.declare_derivatives(output_string,input_string)
+            self.declare_derivatives(output_string,input_string, rows=indices, cols=indices)
 
         self.add_input('BM_bessel_input_mode_m_plus_one', shape=shape)
         self.add_output('BM_bessel_output_mode_m_plus_one', shape=shape)
@@ -75,7 +77,7 @@ class BMBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
             bessel_input  = inputs[input_string]
             output_string = 'BM_bessel_output_mode_{}'.format(i+1)
             
-            derivatives[output_string,input_string] = jvp(order,bessel_input,n=1)
+            derivatives[output_string,input_string] = jvp(order,bessel_input,n=1).flatten()
 
 
 

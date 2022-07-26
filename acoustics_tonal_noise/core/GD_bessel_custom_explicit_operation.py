@@ -17,15 +17,31 @@ class GDBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
         acoustics_dict = self.parameters['acoustics_dict']
         max_frequency_mode = acoustics_dict['mode']
         
+        indices = np.arange(shape[0] * shape[1] * shape[2])
+
         for i in range(max_frequency_mode):
+            i_index = i + 1
             # Declaring inputs 
-            input_string = 'GD_bessel_input_mode_{}'.format(i+1)
+            input_string = 'GD_bessel_input_mode_{}'.format(i_index)
             self.add_input(input_string,shape=shape)
             # Declaring outputs
-            output_string = 'GD_bessel_output_mode_{}'.format(i+1)
+            output_string = 'GD_bessel_output_mode_{}'.format(i_index)
             self.add_output(output_string, shape=shape)
+            
             # Declaring derivatives
-            self.declare_derivatives(output_string,input_string)
+            self.declare_derivatives(output_string,input_string, rows=indices, cols=indices)
+        
+        # self.declare_derivatives('GD_bessel_output_mode_1','GD_bessel_input_mode_2', rows=indices, cols=indices)
+        # self.declare_derivatives('GD_bessel_output_mode_1','GD_bessel_input_mode_3', rows=indices, cols=indices)
+        # self.declare_derivatives('GD_bessel_output_mode_2','GD_bessel_input_mode_1', rows=indices, cols=indices)
+        # self.declare_derivatives('GD_bessel_output_mode_2','GD_bessel_input_mode_3', rows=indices, cols=indices)
+        # self.declare_derivatives('GD_bessel_output_mode_3','GD_bessel_input_mode_1', rows=indices, cols=indices)
+        # self.declare_derivatives('GD_bessel_output_mode_3','GD_bessel_input_mode_2', rows=indices, cols=indices)
+
+
+        # for j in range(max_frequency_mode-1):
+        #     j_index = j + 1
+
 
 
     def compute(self, inputs, outputs):
@@ -57,8 +73,21 @@ class GDBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
             input_string = 'GD_bessel_input_mode_{}'.format(i+1)
             bessel_input  = inputs[input_string]
             output_string = 'GD_bessel_output_mode_{}'.format(i+1)
-            
-            derivatives[output_string,input_string] = jvp(order,bessel_input,n=1)
+            derivatives[output_string,input_string] = jvp(order,bessel_input,n=1).flatten()
+
+        # derivatives['GD_bessel_output_mode_1','GD_bessel_input_mode_2'] = 0
+        # derivatives['GD_bessel_output_mode_1','GD_bessel_input_mode_3'] = 0
+        # derivatives['GD_bessel_output_mode_2','GD_bessel_input_mode_1'] = 0
+        # derivatives['GD_bessel_output_mode_2','GD_bessel_input_mode_3'] = 0
+        # derivatives['GD_bessel_output_mode_3','GD_bessel_input_mode_1'] = 0
+        # derivatives['GD_bessel_output_mode_3','GD_bessel_input_mode_2'] = 0
+
+        # self.declare_derivatives('GD_bessel_output_mode_1','GD_bessel_input_mode_2', rows=indices, cols=indices)
+        # self.declare_derivatives('GD_bessel_output_mode_1','GD_bessel_input_mode_3', rows=indices, cols=indices)
+        # self.declare_derivatives('GD_bessel_output_mode_2','GD_bessel_input_mode_1', rows=indices, cols=indices)
+        # self.declare_derivatives('GD_bessel_output_mode_2','GD_bessel_input_mode_3', rows=indices, cols=indices)
+        # self.declare_derivatives('GD_bessel_output_mode_3','GD_bessel_input_mode_1', rows=indices, cols=indices)
+        # self.declare_derivatives('GD_bessel_output_mode_3','GD_bessel_input_mode_2', rows=indices, cols=indices)
 
 
 
