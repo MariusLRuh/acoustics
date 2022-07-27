@@ -75,12 +75,12 @@ class GDBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
             output_string = 'GD_bessel_output_mode_{}'.format(i+1)
             derivatives[output_string,input_string] = jvp(order,bessel_input,n=1).flatten()
 
-        # derivatives['GD_bessel_output_mode_1','GD_bessel_input_mode_2'] = 0
-        # derivatives['GD_bessel_output_mode_1','GD_bessel_input_mode_3'] = 0
-        # derivatives['GD_bessel_output_mode_2','GD_bessel_input_mode_1'] = 0
-        # derivatives['GD_bessel_output_mode_2','GD_bessel_input_mode_3'] = 0
-        # derivatives['GD_bessel_output_mode_3','GD_bessel_input_mode_1'] = 0
-        # derivatives['GD_bessel_output_mode_3','GD_bessel_input_mode_2'] = 0
+        # derivatives['GD_bessel_output_mode_1','GD_bessel_input_mode_2'] = 0#jvp(2,inputs['GD_bessel_input_mode_2'],n=1).flatten()
+        # derivatives['GD_bessel_output_mode_1','GD_bessel_input_mode_3'] = 0#jvp(2,inputs['GD_bessel_input_mode_3'],n=1).flatten()
+        # derivatives['GD_bessel_output_mode_2','GD_bessel_input_mode_1'] = 0#jvp(4,inputs['GD_bessel_input_mode_1'],n=1).flatten()
+        # derivatives['GD_bessel_output_mode_2','GD_bessel_input_mode_3'] = 0#jvp(4,inputs['GD_bessel_input_mode_3'],n=1).flatten()
+        # derivatives['GD_bessel_output_mode_3','GD_bessel_input_mode_1'] = 0#jvp(6,inputs['GD_bessel_input_mode_1'],n=1).flatten()
+        # derivatives['GD_bessel_output_mode_3','GD_bessel_input_mode_2'] = 0#jvp(6,inputs['GD_bessel_input_mode_2'],n=1).flatten()
 
         # self.declare_derivatives('GD_bessel_output_mode_1','GD_bessel_input_mode_2', rows=indices, cols=indices)
         # self.declare_derivatives('GD_bessel_output_mode_1','GD_bessel_input_mode_3', rows=indices, cols=indices)

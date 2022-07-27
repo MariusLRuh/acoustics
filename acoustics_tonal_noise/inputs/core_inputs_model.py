@@ -26,8 +26,8 @@ class CoreInputsModel(Model):
         y = self.declare_variable('y_position', shape=(num_nodes))
         z = self.declare_variable('z_position', shape=(num_nodes))
 
-        twist = self.declare_variable('twist_profile', shape=(num_radial,))
-        chord = self.declare_variable('chord_profile', shape=( num_radial,))
+        twist = self.declare_variable('twist_profile', shape=(num_radial,1))
+        chord = self.declare_variable('chord_profile', shape=( num_radial,1))
         t_c   = self.declare_variable('thickness_to_chord_ratio', shape=(num_radial))
 
         dT = self.declare_variable('dT', shape=(num_nodes,num_radial,num_azimuthal))
@@ -46,8 +46,8 @@ class CoreInputsModel(Model):
         self.register_output('_y_position', csdl.expand(y, shape,'i->ijk'))
         self.register_output('_z_position', csdl.expand(z, shape,'i->ijk'))       
 
-        self.register_output('_twist', csdl.expand(twist, shape, 'j->ijk'))
-        self.register_output('_chord', csdl.expand(chord, shape, 'j->ijk'))
+        self.register_output('_twist', csdl.expand(twist, shape, 'jk->ijk'))
+        self.register_output('_chord', csdl.expand(chord, shape, 'jk->ijk'))
         self.register_output('_thickness_to_chord_ratio', csdl.expand(t_c, shape, 'j->ijk'))
         
         self.register_output('_dT',dT*1)# csdl.expand(dT, shape, 'ij->ijk'))

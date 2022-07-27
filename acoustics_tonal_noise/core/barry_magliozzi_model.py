@@ -47,7 +47,7 @@ class BarryMagliozziModel(Model):
         dr = self.declare_variable('_dr', shape=shape)
         
         Omega = self.declare_variable('_angular_speed', shape=shape)
-        self.print_var(Omega)
+        # self.print_var(Omega)
         chord = self.declare_variable('_chord', shape=shape)
         twist = self.declare_variable('_twist', shape=shape)
         # self.print_var(twist)
@@ -75,7 +75,7 @@ class BarryMagliozziModel(Model):
                 input_string = 'BM_bessel_input_mode_{}'.format(i+1)
                 self.register_output(input_string, bessel_input_list[i+1])
             input_m_plus_one = (B * max_frequency_mode + 1) * Omega * Y * R / (a_exp * S0)
-            self.register_output('BM_bessel_input_mode_m_plus_one', input_m_plus_one)
+            self.register_output('BM_bessel_input_mode_{}'.format(max_frequency_mode+1), input_m_plus_one)
             bessel_input_list.append(input_m_plus_one)
 
 
@@ -98,7 +98,7 @@ class BarryMagliozziModel(Model):
                 self.register_output(input_string, bessel_input_list[i+1])
         
             input_m_plus_one = (B * max_frequency_mode + 1) * Omega * Y * R / (a_exp * S0)
-            self.register_output('BM_bessel_input_mode_m_plus_one', input_m_plus_one)
+            self.register_output('BM_bessel_input_mode_{}'.format(max_frequency_mode+1), input_m_plus_one)
             bessel_input_list.append(input_m_plus_one)
         
         
@@ -165,6 +165,7 @@ class BarryMagliozziModel(Model):
             # print('SPL_tonal_2',SPL_tonal_2.shape)
             total_tonal_noise = csdl.reshape(10 * csdl.log10(csdl.sum(SPL_tonal_2, axes=(0,))),(num_nodes,1))
             self.register_output('total_tonal_noise', total_tonal_noise)
+            # self.add_objective('total_tonal_noise')
             # self.print_var(total_tonal_noise)
             
             # Broadband noise 
@@ -180,7 +181,7 @@ class BarryMagliozziModel(Model):
             Ab_skm = csdl.expand(B * csdl.sum(chord_skm * dr_skm, axes=(0,)),(num_nodes,1),'i->ji')
             sigma_skm = Ab_skm / np.pi / R_skm**2
             CT_skm = self.declare_variable('CT', shape=(num_nodes,1))
-            self.print_var(CT_skm)
+            # self.print_var(CT_skm)
             # self.register_output('CT_SKM',CT_skm*1)
 
 
@@ -196,6 +197,7 @@ class BarryMagliozziModel(Model):
             total_noise = 10 * csdl.log10(csdl.exp_a(10,SPL_SKM/10) + csdl.exp_a(10,total_tonal_noise/10)) #  10**(SPL_SKM/10) + 10**(total_tonal_noise/10))
             # self.print_var(total_noise)
             self.register_output('tonal_plus_broadband_noise', total_noise)
+            # self.add_objective('tonal_plus_broadband_noise')
 
             # csdl.exp_a(constant_a, csdl_variable_x)
             
