@@ -18,6 +18,8 @@ class BMBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
         max_frequency_mode = acoustics_dict['mode']
         
         indices = np.arange(shape[0] * shape[1] * shape[2])
+        self.length = len(indices)
+
 
         
         for i in range(max_frequency_mode+2): 
@@ -154,7 +156,7 @@ class BMBesselCustomExplicitOperation(csdl.CustomExplicitOperation):
                 else:
                     output_string = 'BM_bessel_output_mode_{}'.format(i)
                     input_string = 'BM_bessel_input_mode_{}'.format(j)
-                    derivatives[output_string,input_string] = 0
+                    derivatives[output_string,input_string] = np.zeros((self.length,)).flatten()
 
 
 

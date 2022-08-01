@@ -46,7 +46,7 @@ class BarryMagliozziModel(Model):
         R  = self.declare_variable('_radius', shape =shape)
         dr = self.declare_variable('_dr', shape=shape)
         
-        Omega = self.declare_variable('_angular_speed', shape=shape)
+        Omega = self.declare_variable('_angular_speed', shape=shape) + 1e-7
         # self.print_var(Omega)
         chord = self.declare_variable('_chord', shape=shape)
         twist = self.declare_variable('_twist', shape=shape)
@@ -122,7 +122,7 @@ class BarryMagliozziModel(Model):
             # self.print_var(z2)
             M_inf2 = csdl.expand(self.declare_variable('M_inf', shape=(1,)), (num_nodes,1))
             # self.print_var(M_inf2)
-            Omega_2 = self.declare_variable('rotational_speed', shape=(num_nodes,1)) * 2 * np.pi
+            Omega_2 = self.declare_variable('rotational_speed', shape=(num_nodes,1)) * 2 * np.pi + 1e-7
             # self.print_var(Omega_2)
             rho_2 = self.declare_variable('density', shape=(num_nodes,1))
             # self.print_var(rho_2)
@@ -151,9 +151,9 @@ class BarryMagliozziModel(Model):
                 # print('FR SUM',fr_sum.shape)
                 PmL = (1/(2**0.5 * np.pi*S0_2))*  fr_sum
                 PmT = rho_2 * ((i+1) * Omega_2)**2 * B**3 * (S0_2 + M_inf2 * x2)**2 / (2 * 2**0.5 * np.pi * (1-M_inf2**2)**2 * S0_2**3) * gr_sum
-                tonal = 10 * csdl.log10((PmL**2 + PmT**2) / p_ref**2)
-                thickness = 10 * csdl.log10((PmT**2) / p_ref**2)
-                loading = 10 * csdl.log10((PmL**2) / p_ref**2)
+                tonal = 10 * csdl.log10((PmL**2 + PmT**2 + 1e-10) / p_ref**2)
+                thickness = 10 * csdl.log10((PmT**2 + 1e-10) / p_ref**2)
+                loading = 10 * csdl.log10((PmL**2 + 1e-10) / p_ref**2)
 
 
                 SPL_tonal[i,:] = csdl.reshape(tonal ,new_shape = (num_azimuthal, num_nodes))
@@ -163,7 +163,7 @@ class BarryMagliozziModel(Model):
                 SPL_tonal_2[i,:] = csdl.reshape(csdl.exp_a(10,SPL_tonal[i,:]/10) ,new_shape = (num_azimuthal, num_nodes))
 
             # print('SPL_tonal_2',SPL_tonal_2.shape)
-            total_tonal_noise = csdl.reshape(10 * csdl.log10(csdl.sum(SPL_tonal_2, axes=(0,))),(num_nodes,1))
+            total_tonal_noise = csdl.reshape(10 * csdl.log10(1e-10 + csdl.sum(SPL_tonal_2, axes=(0,))),(num_nodes,1))
             self.register_output('total_tonal_noise', total_tonal_noise)
             # self.add_objective('total_tonal_noise')
             # self.print_var(total_tonal_noise)
@@ -190,11 +190,11 @@ class BarryMagliozziModel(Model):
             # self.print_var(chord_skm)
 
 
-            SPL150_SKM = 10*csdl.log10((Omega_skm*R_skm)**6*Ab_skm*(CT_skm/sigma_skm)**2) - 42.9
+            SPL150_SKM = 10*csdl.log10(1e-10 + (Omega_skm*R_skm)**6*Ab_skm*(CT_skm/sigma_skm)**2) - 42.9
             SPL_SKM = SPL150_SKM + 20*csdl.log10(csdl.sin(theta0_skm)/(S0_skm/150))
             # self.register_output('SPL_SKM',SPL_SKM)
 
-            total_noise = 10 * csdl.log10(csdl.exp_a(10,SPL_SKM/10) + csdl.exp_a(10,total_tonal_noise/10)) #  10**(SPL_SKM/10) + 10**(total_tonal_noise/10))
+            total_noise = 10 * csdl.log10(1e-10 + csdl.exp_a(10,SPL_SKM/10) + csdl.exp_a(10,total_tonal_noise/10)) #  10**(SPL_SKM/10) + 10**(total_tonal_noise/10))
             # self.print_var(total_noise)
             self.register_output('tonal_plus_broadband_noise', total_noise)
             # self.add_objective('tonal_plus_broadband_noise')
