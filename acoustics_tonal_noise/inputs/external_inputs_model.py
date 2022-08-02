@@ -20,8 +20,8 @@ class ExternalInputsModel(Model):
 
         # self.create_input('mode',shape = (frequency_mode,))
 
-        omega = self.declare_variable('omega', shape=(num_nodes, 1), units='rpm/1000') * 1000
-        # self.print_var(omega)
+        omega = self.declare_variable('omega', shape=(num_nodes, 1), units='rpm')
+        self.print_var(omega)
         thrust_origin = self.declare_variable(T_o_name_list[0], shape=(num_nodes,3))#, val=np.array([[1.829,0,3.16757]]))
         # self.print_var((thrust_origin[0,2]**2)**0.5)
         # thrust_vector = self.declare_variable(name='thrust_vector', shape=(num_nodes,3))
