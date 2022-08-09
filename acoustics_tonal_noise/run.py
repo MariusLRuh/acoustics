@@ -2,8 +2,8 @@ import numpy as np
 import openmdao.api as om
 from csdl import Model 
 
-from csdl_om import Simulator
-
+# from csdl_om import Simulator
+from python_csdl_backend import Simulator
 # from python_csdl_backend import Simulator
 
 from functions.polar_plot import polar_plot
@@ -79,7 +79,7 @@ class RunModel(Model):
         self.create_input(name='thrust_origin', shape=(num_nodes,3), val=np.tile(thrust_origin,(num_nodes,1)))
         self.create_input(name='thrust_vector', shape=(num_nodes,3), val=np.tile(thrust_vector,(num_nodes,1)))
 
-        self.create_input('omega', shape=(num_nodes, 1), units='rpm', val=2.150)
+        self.create_input('omega', shape=(num_nodes, 1), units='rpm', val=2150)
         self.add_design_variable('omega')
         self.create_input('M_inf',shape=(num_nodes), val=0)
         self.add_design_variable('M_inf')
@@ -148,9 +148,13 @@ print('\n')
 
 # GD_tonal_noise = sim['SPL_tonal_Gutin_Deming']
 BM_tonal_noise = sim['SPL_tonal_Barry_Magliozzi']
+total_tonal_noise = sim['total_tonal_noise']
+total_noise = sim['tonal_plus_broadband_noise']
 theta = sim['_theta'][0,0,:]
 # print(GD_tonal_noise)
 print(BM_tonal_noise)
+print(total_tonal_noise)
+print(total_noise)
 
 # GD_gill = np.loadtxt('txt_files/GD_tonal_Gill_output.txt')
 # BM_gill = np.loadtxt('txt_files/BM_tonal_Gill_output.txt')

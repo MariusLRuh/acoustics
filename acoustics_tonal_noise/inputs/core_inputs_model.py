@@ -27,7 +27,9 @@ class CoreInputsModel(Model):
         z = self.declare_variable('z_position', shape=(num_nodes))
 
         twist = self.declare_variable('twist_profile', shape=(num_radial,1))
-        chord = self.declare_variable('chord_profile', shape=( num_radial,1))
+        # self.print_var(twist*180/np.pi)
+        chord = self.declare_variable('chord_profile', shape=(num_radial,1))
+        # self.print_var(chord)
         t_c   = self.declare_variable('thickness_to_chord_ratio', shape=(num_radial))
 
         dT = self.declare_variable('dT', shape=(num_nodes,num_radial,num_azimuthal))
