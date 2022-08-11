@@ -187,7 +187,9 @@ class BarryMagliozziModel(Model):
             z_skm = self.declare_variable('z_position', shape=(num_nodes,1))
             S0_skm = (x_skm**2 + y_skm**2 + z_skm**2)**0.5
             theta0_skm = csdl.arcsin((z_skm**2)**0.5 / S0_skm)
-            R_skm = csdl.expand(self.declare_variable('propeller_radius', shape=(1,)),(num_nodes,1))
+            ft2m = 1/3.281
+            R_skm = csdl.expand(self.declare_variable('propeller_radius', shape=(1,)) * ft2m/2,(num_nodes,1))
+            self.print_var(R_skm)
 
             # For A-weighting
             freq_r = self.declare_variable('freq_r',val=np.array([1/2,1,2,4,8,16]))

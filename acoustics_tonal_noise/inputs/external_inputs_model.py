@@ -57,9 +57,9 @@ class ExternalInputsModel(Model):
         # self.create_input('dQ', shape = (num_nodes,num_radial))
 
         # self.create_input('M_inf',shape = (num_nodes,))
-
+        ft2m = 1/3.281
         # self.create_input('propeller_radius', shape = (num_nodes,))
-        rotor_radius = self.declare_variable(name='propeller_radius', shape=(1,), units='m')
+        rotor_radius = self.declare_variable(name='propeller_radius', shape=(1,), units='m') * ft2m / 2
         # self.print_var(rotor_radius)
         R_h = 0.2 * rotor_radius
         self.register_output('hub_radius',R_h)

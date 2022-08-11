@@ -16,9 +16,10 @@ class CoreInputsModel(Model):
         num_nodes = shape[0]
         num_radial = shape[1]
         num_azimuthal = shape[2]
-        
+        ft2m = 1/3.281
         hub_radius = self.declare_variable('hub_radius', shape=(1,))
-        rotor_radius = self.declare_variable('propeller_radius', shape=(1,))
+        rotor_radius = self.declare_variable('propeller_radius', shape=(1,)) * ft2m / 2
+        # self.print_var(rotor_radius)
         dr = self.declare_variable('dr', shape=(1,))
         rotational_speed = self.declare_variable('rotational_speed', shape=(num_nodes))
         
