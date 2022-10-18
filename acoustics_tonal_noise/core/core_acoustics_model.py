@@ -9,8 +9,8 @@ from acoustics_tonal_noise.inputs.core_inputs_model import CoreInputsModel
 from acoustics_tonal_noise.inputs.preprocess_model import PreprocessModel
 from acoustics_tonal_noise.core.gutin_deming_model import GutinDemingModel
 from acoustics_tonal_noise.core.barry_magliozzi_model import BarryMagliozziModel
-from acoustics_tonal_noise.core.hanson_model import HansonModel
-from acoustics_tonal_noise.core.broadband_noise.skm import SchlegelKingMullModel
+# from acoustics_tonal_noise.core.hanson_model import HansonModel
+# from acoustics_tonal_noise.core.broadband_noise.skm import SchlegelKingMullModel
 
 from lsdo_atmos.atmosphere_model import AtmosphereModel
 from acoustics_tonal_noise.functions.get_acoustics_dictionary import get_acoustics_parameters
